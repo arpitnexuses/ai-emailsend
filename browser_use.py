@@ -29,41 +29,61 @@ class Agent:
         print("✅ Agent initialized successfully - NO EMAILS SENT - waiting for manual commands only.")
 
     def setup_services(self):
+        """Setup Google Sheets and other services"""
         try:
-            print("\n🔧 Setting up services (NO EMAILS WILL BE SENT)...")
+            print(f"\n🔧 Setting up services for task: {self.task}")
             
             # Setup Google Sheets with OAuth2 (this is what we actually need)
             print("\n🔧 Setting up Google Sheets connection...")
             SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
             creds = None
             
-            # The file token.pickle stores the user's access and refresh tokens
-            if os.path.exists('token.pickle'):
-                print("Found existing token.pickle, loading credentials...")
-                with open('token.pickle', 'rb') as token:
-                    creds = pickle.load(token)
+            # Try to get credentials from environment variables first (for production)
+            service_account_info = os.getenv('GOOGLE_SERVICE_ACCOUNT_JSON')
+            if service_account_info:
+                print("Using service account from environment variables...")
+                try:
+                    import json
+                    service_account_dict = json.loads(service_account_info)
+                    creds = service_account.Credentials.from_service_account_info(
+                        service_account_dict, scopes=SCOPES)
+                    print("✅ Successfully loaded credentials from environment variables")
+                except Exception as e:
+                    print(f"❌ Error loading credentials from environment: {e}")
+                    creds = None
             
-            # If there are no (valid) credentials available, let the user log in
-            if not creds or not creds.valid:
-                print("No valid credentials found, starting OAuth flow...")
-                if creds and creds.expired and creds.refresh_token:
-                    print("Refreshing expired credentials...")
-                    creds.refresh(Request())
-                else:
-                    print("Starting new OAuth flow...")
-                    if not os.path.exists('service_account.json'):
-                        print("Error: service_account.json not found!")
-                        return
-                    
-                    print("Loading client secrets from service_account.json...")
-                    flow = InstalledAppFlow.from_client_secrets_file(
-                        'service_account.json', SCOPES)
-                    print("Starting local server for OAuth...")
-                    creds = flow.run_local_server(port=8080)
+            # Fallback to local files (for development)
+            if not creds:
+                print("Falling back to local files for development...")
                 
-                print("Saving credentials to token.pickle...")
-                with open('token.pickle', 'wb') as token:
-                    pickle.dump(creds, token)
+                # The file token.pickle stores the user's access and refresh tokens
+                if os.path.exists('token.pickle'):
+                    print("Found existing token.pickle, loading credentials...")
+                    with open('token.pickle', 'rb') as token:
+                        creds = pickle.load(token)
+                
+                # If there are no (valid) credentials available, let the user log in
+                if not creds or not creds.valid:
+                    print("No valid credentials found, starting OAuth flow...")
+                    if creds and creds.expired and creds.refresh_token:
+                        print("Refreshing expired credentials...")
+                        creds.refresh(Request())
+                    else:
+                        print("Starting new OAuth flow...")
+                        if not os.path.exists('service_account.json'):
+                            print("Error: service_account.json not found!")
+                            print("For production, set GOOGLE_SERVICE_ACCOUNT_JSON environment variable")
+                            return
+                        
+                        print("Loading client secrets from service_account.json...")
+                        flow = InstalledAppFlow.from_client_secrets_file(
+                            'service_account.json', SCOPES)
+                        print("Starting local server for OAuth...")
+                        creds = flow.run_local_server(port=8080)
+                    
+                    print("Saving credentials to token.pickle...")
+                    with open('token.pickle', 'wb') as token:
+                        pickle.dump(creds, token)
             
             print("Authorizing with Google Sheets...")
             gc = gspread.authorize(creds)

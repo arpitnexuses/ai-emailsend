@@ -24,7 +24,6 @@ required_files=(
     "runtime.txt"
     "templates/index.html"
     "static/js/app.js"
-    "service_account.json"
 )
 
 missing_files=()
@@ -82,9 +81,10 @@ if [[ "$response" =~ ^[Yy]$ ]]; then
     echo "5. Deploy!"
     echo ""
     echo "📋 Required environment variables:"
-    echo "   - OPENAI_API_KEY"
-    echo "   - EMAIL_USER (optional)"
-    echo "   - EMAIL_PASSWORD (optional)"
+echo "   - OPENAI_API_KEY"
+echo "   - GOOGLE_SERVICE_ACCOUNT_JSON (for Google Sheets access)"
+echo "   - EMAIL_USER (optional)"
+echo "   - EMAIL_PASSWORD (optional)"
 else
     echo "⏭️  Skipping git operations"
     echo ""
@@ -105,4 +105,4 @@ echo "   ✅ requirements.txt - Python dependencies"
 echo "   ✅ runtime.txt - Python version"
 echo "   ✅ templates/index.html - Frontend"
 echo "   ✅ static/js/app.js - Frontend JavaScript"
-echo "   ✅ service_account.json - Google Sheets credentials" 
+echo "   ✅ Environment variables - Google Sheets credentials (GOOGLE_SERVICE_ACCOUNT_JSON)" 
